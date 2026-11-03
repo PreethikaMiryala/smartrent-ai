@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+uploads/*
+!uploads/.gitkeep
+data/*.db-journal
+.DS_Store
+.streamlit/secrets.toml
+data/*.db
