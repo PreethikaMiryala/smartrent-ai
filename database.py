@@ -264,9 +264,9 @@ def seed_sample_data(conn: sqlite3.Connection):
 
     # 3. Create Tenants
     sample_tenants_data = [
-        ("rahul_sharma", "rahul123", "Rahul Sharma", "rahul.s@example.com", "+91 91234 56789", "Room 101", "2026-06-01", "+91 99887 76655"),
-        ("priya_patel", "priya123", "Priya Patel", "priya.p@example.com", "+91 92345 67890", "Room 102", "2026-08-15", "+91 98760 12345"),
-        ("amit_kumar", "amit123", "Amit Kumar", "amit.k@example.com", "+91 93456 78901", "Room 201", "2026-09-01", "+91 94567 11223"),
+        ("shiva_guptha", "shiva123", "Shiva Guptha", "shiva.g@example.com", "+91 91234 56789", "Room 101", "2026-06-01", "+91 99887 76655"),
+        ("preethika_guptha", "preethika123", "Preethika Guptha", "preethika.g@example.com", "+91 92345 67890", "Room 102", "2026-08-15", "+91 98760 12345"),
+        ("bunny", "bunny123", "Bunny", "bunny@example.com", "+91 93456 78901", "Room 201", "2026-09-01", "+91 94567 11223"),
     ]
 
     tenant_ids = {}
@@ -289,38 +289,38 @@ def seed_sample_data(conn: sqlite3.Connection):
     current_month = "2026-11"
     prev_month = "2026-10"
 
-    # Priya: Room 102 (₹7500). In Oct, paid on time with 5% discount (₹375). Final: ₹7125. Paid: ₹7125.
+    # Preethika: Room 102 (₹7500). In Oct, paid on time with 5% discount (₹375). Final: ₹7125. Paid: ₹7125.
     # In Nov: Base ₹7500, earned 10% discount approved! Final ₹6750. Paid: ₹6750 (Paid)
     cursor.execute("""
     INSERT INTO rent_records (tenant_id, room_id, month_year, base_rent, discount_percentage, discount_amount, final_rent, paid_amount, balance, status, due_date)
     VALUES (?, ?, ?, 7500.0, 10.0, 750.0, 6750.0, 6750.0, 0.0, 'Paid', '2026-11-05');
-    """, (tenant_ids["priya_patel"], room_ids["Room 102"], current_month))
-    priya_rent_id = cursor.lastrowid
+    """, (tenant_ids["preethika_guptha"], room_ids["Room 102"], current_month))
+    preethika_rent_id = cursor.lastrowid
 
     cursor.execute("""
     INSERT INTO payments (rent_record_id, tenant_id, amount, payment_date, payment_method, transaction_reference, notes, recorded_by)
     VALUES (?, ?, 6750.0, '2026-11-03', 'UPI', 'UPI/20261103/778921', 'Full payment received via PhonePe', ?);
-    """, (priya_rent_id, tenant_ids["priya_patel"], owner_user_id))
+    """, (preethika_rent_id, tenant_ids["preethika_guptha"], owner_user_id))
 
-    # Rahul: Room 101 (₹8000). In Nov: Base ₹8000, 10% discount approved (₹800). Final ₹7200. Paid: ₹4000. Balance: ₹3200 (Partially Paid)
+    # Shiva: Room 101 (₹8000). In Nov: Base ₹8000, 10% discount approved (₹800). Final ₹7200. Paid: ₹4000. Balance: ₹3200 (Partially Paid)
     cursor.execute("""
     INSERT INTO rent_records (tenant_id, room_id, month_year, base_rent, discount_percentage, discount_amount, final_rent, paid_amount, balance, status, due_date)
     VALUES (?, ?, ?, 8000.0, 10.0, 800.0, 7200.0, 4000.0, 3200.0, 'Partially Paid', '2026-11-05');
-    """, (tenant_ids["rahul_sharma"], room_ids["Room 101"], current_month))
-    rahul_rent_id = cursor.lastrowid
+    """, (tenant_ids["shiva_guptha"], room_ids["Room 101"], current_month))
+    shiva_rent_id = cursor.lastrowid
 
     cursor.execute("""
     INSERT INTO payments (rent_record_id, tenant_id, amount, payment_date, payment_method, transaction_reference, notes, recorded_by)
     VALUES (?, ?, 4000.0, '2026-11-02', 'Bank Transfer', 'IMPS-998822341', 'Partial installment paid, remaining promised by 10th', ?);
-    """, (rahul_rent_id, tenant_ids["rahul_sharma"], owner_user_id))
+    """, (shiva_rent_id, tenant_ids["shiva_guptha"], owner_user_id))
 
-    # Amit: Room 201 (₹9000). In Nov: Base ₹9000, 0% discount. Final ₹9000. Paid: 0. Balance: ₹9000 (Pending)
+    # Bunny: Room 201 (₹9000). In Nov: Base ₹9000, 0% discount. Final ₹9000. Paid: 0. Balance: ₹9000 (Pending)
     cursor.execute("""
     INSERT INTO rent_records (tenant_id, room_id, month_year, base_rent, discount_percentage, discount_amount, final_rent, paid_amount, balance, status, due_date)
     VALUES (?, ?, ?, 9000.0, 0.0, 0.0, 9000.0, 0.0, 9000.0, 'Pending', '2026-11-05');
-    """, (tenant_ids["amit_kumar"], room_ids["Room 201"], current_month))
+    """, (tenant_ids["bunny"], room_ids["Room 201"], current_month))
 
-    # 5. Create Sample Completed Inspection for Rahul Sharma (Room 101)
+    # 5. Create Sample Completed Inspection for Shiva Guptha (Room 101)
     cursor.execute("""
     INSERT INTO inspections (tenant_id, room_id, month_year, submission_date, overall_score, result_category, positive_observations, areas_for_improvement, recommendations, reward_eligible, status, ai_analysis_raw)
     VALUES (?, ?, ?, '2026-11-01 10:15:00', 92.5, 'Excellent',
@@ -328,11 +328,11 @@ def seed_sample_data(conn: sqlite3.Connection):
     'Slight moisture around bathroom washbasin edge.',
     'Wipe the silicone border around the sink dry after use to prevent water deposit stains.',
     1, 'Inspected', '{"overall_score": 92.5, "result": "Excellent"}');
-    """, (tenant_ids["rahul_sharma"], room_ids["Room 101"], current_month))
-    rahul_insp_id = cursor.lastrowid
+    """, (tenant_ids["shiva_guptha"], room_ids["Room 101"], current_month))
+    shiva_insp_id = cursor.lastrowid
 
-    # Detailed scores for Rahul
-    scores_rahul = [
+    # Detailed scores for Shiva
+    scores_shiva = [
         ("Floor Cleanliness", 96, "Tiled floor is polished and free of stains"),
         ("Dust & Visible Dirt", 92, "Shelves and surfaces are clean"),
         ("Waste Management", 95, "Dustbin emptied and fitted with fresh bag"),
@@ -341,19 +341,19 @@ def seed_sample_data(conn: sqlite3.Connection):
         ("Kitchen Cleanliness", 88, "Countertop wiped down"),
         ("Bathroom Cleanliness", 90, "Clean mirror and floor tiles"),
     ]
-    for cat, sc, notes in scores_rahul:
+    for cat, sc, notes in scores_shiva:
         cursor.execute("""
         INSERT INTO cleanliness_scores (inspection_id, category, score, max_score, notes)
         VALUES (?, ?, ?, 100, ?);
-        """, (rahul_insp_id, cat, sc, notes))
+        """, (shiva_insp_id, cat, sc, notes))
 
-    # Create Rahul's Reward
+    # Create Shiva's Reward
     cursor.execute("""
     INSERT INTO rewards (tenant_id, inspection_id, rent_record_id, month_year, cleanliness_score, discount_percentage, discount_amount, reward_points, status, owner_comments, approved_at)
     VALUES (?, ?, ?, ?, 92.5, 10.0, 800.0, 95, 'Approved', 'Great job maintaining the room!', '2026-11-01 14:00:00');
-    """, (tenant_ids["rahul_sharma"], rahul_insp_id, rahul_rent_id, current_month))
+    """, (tenant_ids["shiva_guptha"], shiva_insp_id, shiva_rent_id, current_month))
 
-    # 6. Create Sample Completed Inspection for Priya Patel (Room 102)
+    # 6. Create Sample Completed Inspection for Preethika Guptha (Room 102)
     cursor.execute("""
     INSERT INTO inspections (tenant_id, room_id, month_year, submission_date, overall_score, result_category, positive_observations, areas_for_improvement, recommendations, reward_eligible, status, ai_analysis_raw)
     VALUES (?, ?, ?, '2026-11-01 12:30:00', 94.0, 'Excellent',
@@ -361,10 +361,10 @@ def seed_sample_data(conn: sqlite3.Connection):
     'Minor clutter on top shelf of wardrobe.',
     'Keep shoe rack orderly near the entrance door.',
     1, 'Inspected', '{"overall_score": 94.0, "result": "Excellent"}');
-    """, (tenant_ids["priya_patel"], room_ids["Room 102"], current_month))
-    priya_insp_id = cursor.lastrowid
+    """, (tenant_ids["preethika_guptha"], room_ids["Room 102"], current_month))
+    preethika_insp_id = cursor.lastrowid
 
-    scores_priya = [
+    scores_preethika = [
         ("Floor Cleanliness", 95, "Immaculate floor"),
         ("Dust & Visible Dirt", 95, "No dust on fan or tables"),
         ("Waste Management", 92, "Segregated waste bins"),
@@ -373,33 +373,33 @@ def seed_sample_data(conn: sqlite3.Connection):
         ("Kitchen Cleanliness", 96, "Stove and basin clean"),
         ("Bathroom Cleanliness", 94, "Dry and sanitized"),
     ]
-    for cat, sc, notes in scores_priya:
+    for cat, sc, notes in scores_preethika:
         cursor.execute("""
         INSERT INTO cleanliness_scores (inspection_id, category, score, max_score, notes)
         VALUES (?, ?, ?, 100, ?);
-        """, (priya_insp_id, cat, sc, notes))
+        """, (preethika_insp_id, cat, sc, notes))
 
     cursor.execute("""
     INSERT INTO rewards (tenant_id, inspection_id, rent_record_id, month_year, cleanliness_score, discount_percentage, discount_amount, reward_points, status, owner_comments, approved_at)
     VALUES (?, ?, ?, ?, 94.0, 10.0, 750.0, 100, 'Applied', 'Outstanding cleanliness consistently', '2026-11-01 16:30:00');
-    """, (tenant_ids["priya_patel"], priya_insp_id, priya_rent_id, current_month))
+    """, (tenant_ids["preethika_guptha"], preethika_insp_id, preethika_rent_id, current_month))
 
     # 7. Create Sample Damage Alert (for review)
     cursor.execute("""
     INSERT INTO damage_alerts (inspection_id, room_id, tenant_id, damage_category, description, severity, confidence, image_ref, previous_inspection_comparison, recommended_action, status, owner_comments)
     VALUES (?, ?, ?, 'Damp Walls', 'Minor paint dampness patch observed near the window frame on the north wall', 'Low', 0.82, 'uploads/sample_damp.jpg', 'Not present in October inspection photos; likely recent monsoon seepage', 'Inspect window sealant from the outside; apply water repellent coating', 'Pending Review', NULL);
-    """, (rahul_insp_id, room_ids["Room 101"], tenant_ids["rahul_sharma"]))
+    """, (shiva_insp_id, room_ids["Room 101"], tenant_ids["shiva_guptha"]))
 
     # 8. Create Sample Maintenance Request
     cursor.execute("""
     INSERT INTO maintenance_requests (tenant_id, room_id, category, title, description, priority, status, image_path, owner_notes)
     VALUES (?, ?, 'Plumbing', 'Bathroom Sink Slow Drainage', 'Water drains very slowly from the bathroom sink basin after washing hands.', 'Medium', 'In Progress', NULL, 'Plumber scheduled for tomorrow morning 11 AM');
-    """, (tenant_ids["amit_kumar"], room_ids["Room 201"]))
+    """, (tenant_ids["bunny"], room_ids["Room 201"]))
 
     cursor.execute("""
     INSERT INTO maintenance_requests (tenant_id, room_id, category, title, description, priority, status, image_path, resolved_at, owner_notes)
     VALUES (?, ?, 'Electrical', 'Ceiling Fan Regulator Humming', 'Fan regulator makes a mild buzzing noise on speed 3.', 'Low', 'Completed', NULL, '2026-10-25 15:00:00', 'Regulator replaced with brand new Anchor switch');
-    """, (tenant_ids["rahul_sharma"], room_ids["Room 101"]))
+    """, (tenant_ids["shiva_guptha"], room_ids["Room 101"]))
 
     # 9. System Settings
     settings = [

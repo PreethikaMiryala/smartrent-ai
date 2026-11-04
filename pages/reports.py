@@ -48,19 +48,19 @@ def render_reports():
                 x=monthly_agg["month_year"],
                 y=monthly_agg["final_rent"],
                 name="Billed Rent (₹)",
-                marker_color="#3b82f6"
+                marker_color="#6D3914"
             ))
             fig_cash.add_trace(go.Bar(
                 x=monthly_agg["month_year"],
                 y=monthly_agg["paid_amount"],
                 name="Collected (₹)",
-                marker_color="#10b981"
+                marker_color="#AB7843"
             ))
             fig_cash.add_trace(go.Bar(
                 x=monthly_agg["month_year"],
                 y=monthly_agg["balance"],
                 name="Outstanding Balance (₹)",
-                marker_color="#ef4444"
+                marker_color="#4C2B08"
             ))
             fig_cash.update_layout(
                 barmode="group",
@@ -105,7 +105,7 @@ def render_reports():
                         nbins=10,
                         title="Distribution of Cleanliness Scores",
                         labels={"overall_score": "Score (out of 100)"},
-                        color_discrete_sequence=["#06b6d4"]
+                        color_discrete_sequence=["#AB7843"]
                     )
                     st.plotly_chart(fig_dist, use_container_width=True)
 
@@ -120,10 +120,10 @@ def render_reports():
                         title="Score Tiers Share",
                         color="Category",
                         color_discrete_map={
-                            "Excellent": "#10b981",
-                            "Good": "#3b82f6",
-                            "Average": "#f59e0b",
-                            "Needs Improvement": "#ef4444"
+                            "Excellent": "#2E7D32",
+                            "Good": "#AB7843",
+                            "Average": "#6D3914",
+                            "Needs Improvement": "#991B1B"
                         }
                     )
                     st.plotly_chart(fig_pie, use_container_width=True)

@@ -12,22 +12,23 @@ def render_ai_assistant():
     if not user:
         st.error("Please log in to chat with the SmartRent AI Assistant.")
         st.stop()
+        return
 
-    st.title("💬 SmartRent AI Assistant")
+    st.title("SmartRent AI Assistant")
     role_label = "Property Owner" if is_owner() else "Tenant"
     st.caption(f"Role: **{role_label}** | Powered by Groq AI (`qwen/qwen3.8-27b`) with live SQLite database integration.")
 
     # Check API Key
     api_key = get_active_groq_api_key()
     if not api_key:
-        st.warning("⚠️ Groq API key is not configured. Please enter your API key in Settings or ask the administrator.")
+        st.warning("AI Assistant service is temporarily unavailable. Please contact property management.")
 
     # Initialize chat history in session state
     if "messages" not in st.session_state:
         st.session_state.messages = []
 
     # Quick Suggestion Chips based on Role
-    st.markdown("##### 💡 Suggested Questions:")
+    st.markdown("##### Suggested Inquiries")
     if is_owner():
         quick_prompts = [
             "How many rooms are currently occupied and vacant?",
@@ -56,7 +57,7 @@ def render_ai_assistant():
             if st.button(prompt_text, key=f"chip_{idx}", use_container_width=True):
                 selected_quick_prompt = prompt_text
 
-    st.markdown("---")
+    st.html('<div style="height: 1px; background-color: #E3D7CE; margin: 20px 0;"></div>')
 
     # Render existing conversation messages
     for msg in st.session_state.messages:
@@ -99,7 +100,7 @@ def render_ai_assistant():
     # Clear chat option
     if st.session_state.messages:
         st.write("")
-        if st.button("🗑️ Clear Conversation History", type="secondary"):
+        if st.button("Clear Conversation History", type="secondary"):
             st.session_state.messages = []
             st.rerun()
 

@@ -24,8 +24,9 @@ def render_maintenance():
     if not user:
         st.error("Please log in to access maintenance tickets.")
         st.stop()
+        return
 
-    st.title("🛠️ Property Maintenance & Repair Requests")
+    st.title("Maintenance & Repair Requests")
 
     if is_owner():
         _render_owner_maintenance(user)
@@ -72,8 +73,8 @@ def _render_owner_maintenance(user):
         prio_color = "#ef4444" if m["priority"] == "Urgent" else ("#f97316" if m["priority"] == "High" else "#3b82f6")
         
         with st.expander(
-            f"🔧 **Ticket #{m['id']}** — **{m['room_number']}** ({m['tenant_name']}) | "
-            f"**{m['title']}** | Priority: **{m['priority']}** | Status: **{m['status']}**",
+            f"Ticket #{m['id']} — {m['room_number']} ({m['tenant_name']}) | "
+            f"{m['title']} | Priority: {m['priority']} | Status: {m['status']}",
             expanded=(m["status"] in ("Submitted", "In Progress"))
         ):
             c_info, c_action = st.columns([2, 1.2])
@@ -128,7 +129,7 @@ def _render_tenant_maintenance(user):
     room_id = tenant["room_id"]
     room_num = tenant["room_number"]
 
-    tab_submit, tab_my_tickets = st.tabs(["➕ Submit New Request", "📋 My Active & Past Tickets"])
+    tab_submit, tab_my_tickets = st.tabs(["Submit New Request", "Active & Past Tickets"])
 
     with tab_submit:
         st.subheader("Report a Problem in Your Room")
@@ -143,7 +144,7 @@ def _render_tenant_maintenance(user):
 
             description = st.text_area("Detailed Description*", placeholder="Explain the issue, when it started, and where in the room it is located...")
 
-            btn_submit = st.form_submit_button("🚀 Submit Maintenance Request", use_container_width=True, type="primary")
+            btn_submit = st.form_submit_button("Submit Maintenance Request", use_container_width=True, type="primary")
 
             if btn_submit:
                 if not title.strip() or not description.strip():
@@ -167,7 +168,7 @@ def _render_tenant_maintenance(user):
                     VALUES (?, ?, ?, ?, ?, ?, 'Submitted', ?);
                     """, (tenant_id, room_id, category, title.strip(), description.strip(), priority, saved_path), commit=True)
 
-                    st.success("🎉 Maintenance ticket created! The property manager will review and assign a technician.")
+                    st.success("Maintenance ticket created. The property manager will review and assign a technician.")
                     st.rerun()
 
     with tab_my_tickets:
@@ -179,7 +180,7 @@ def _render_tenant_maintenance(user):
         else:
             for m in my_requests:
                 with st.expander(
-                    f"🔧 **#{m['id']}: {m['title']}** | Priority: **{m['priority']}** | Status: **{m['status']}**",
+                    f"#{m['id']}: {m['title']} | Priority: {m['priority']} | Status: {m['status']}",
                     expanded=(m["status"] in ("Submitted", "In Progress"))
                 ):
                     st.markdown(f"""

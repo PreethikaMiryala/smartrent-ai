@@ -22,11 +22,12 @@ def render_rent_payments():
     if not user:
         st.error("Please log in to view rent records.")
         st.stop()
+        return
 
     # Automatically refresh overdue status
     check_and_update_overdue_statuses()
 
-    st.title("💳 Rent & Payment Management")
+    st.title("Rent & Payments")
 
     if is_owner():
         _render_owner_rent_view(user)
@@ -44,17 +45,17 @@ def _render_owner_rent_view(user):
 
     c_filter, c_btn = st.columns([2, 1.5])
     with c_filter:
-        selected_month = st.selectbox("📅 Billing Cycle Filter", options=["All Months"] + months, index=1)
+        selected_month = st.selectbox("Billing Cycle Filter", options=["All Months"] + months, index=1)
     with c_btn:
         st.write("") # spacing
-        with st.popover("⚡ Generate Monthly Invoices"):
+        with st.popover("Generate Monthly Invoices"):
             st.write("Generate rent invoices for all active tenants.")
             inv_month = st.selectbox("Target Month", options=months, index=default_idx, key="inv_m_select")
             due_day = st.number_input("Due Date (Day of Month)", min_value=1, max_value=28, value=5)
             if st.button("Generate Invoices Now", type="primary", use_container_width=True):
                 created, skipped = generate_monthly_invoices(inv_month, due_day=due_day)
                 if created > 0:
-                    st.success(f"Generated {created} invoices for {inv_month} with approved discounts applied!")
+                    st.success(f"Generated {created} invoices for {inv_month} with approved discounts applied.")
                 else:
                     st.info(f"No new invoices created. {', '.join(skipped) if skipped else 'All active tenants already have invoices.'}")
                 st.rerun()
@@ -77,13 +78,13 @@ def _render_owner_rent_view(user):
 
     st.markdown("---")
 
-    tab_invoices, tab_payments = st.tabs(["📑 Invoices & Collection", "📜 Payment Transaction Ledger"])
+    tab_invoices, tab_payments = st.tabs(["Invoices & Collection", "Payment Transaction Ledger"])
 
     with tab_invoices:
         # Search & Status Filter
         col_s1, col_s2 = st.columns([2, 1])
         with col_s1:
-            q_search = st.text_input("🔍 Search invoice by tenant name or room", "")
+            q_search = st.text_input("Search invoice by tenant name or room", "")
         with col_s2:
             st_filter = st.selectbox("Filter Payment Status", ["All", "Pending", "Partially Paid", "Paid", "Overdue"])
 
@@ -102,8 +103,8 @@ def _render_owner_rent_view(user):
         else:
             for inv in filtered_inv:
                 with st.expander(
-                    f"🏠 **{inv['room_number']}** — **{inv['tenant_name']}** | Month: `{inv['month_year']}` | "
-                    f"Due: {format_currency(inv['final_rent'])} | Paid: {format_currency(inv['paid_amount'])} | Status: **{inv['status']}**",
+                    f"Unit {inv['room_number']} — {inv['tenant_name']} | Month: {inv['month_year']} | "
+                    f"Due: {format_currency(inv['final_rent'])} | Paid: {format_currency(inv['paid_amount'])} | Status: {inv['status']}",
                     expanded=False
                 ):
                     col_det, col_rec = st.columns([2, 1.2])
@@ -130,7 +131,7 @@ def _render_owner_rent_view(user):
 
                     with col_rec:
                         if inv["balance"] > 0:
-                            st.markdown("##### 💵 Record Payment")
+                            st.markdown("##### Record Payment")
                             with st.form(f"form_pay_{inv['id']}", clear_on_submit=True):
                                 pay_amount = st.number_input(
                                     "Amount Received (₹)*",
@@ -162,7 +163,7 @@ def _render_owner_rent_view(user):
                                     else:
                                         st.error(msg)
                         else:
-                            st.success("✅ Fully Paid. No outstanding balance.")
+                            st.success("Fully Paid. No outstanding balance.")
 
     with tab_payments:
         st.subheader("All Transaction Records")
@@ -204,15 +205,15 @@ def _render_tenant_rent_view(user):
     # Outstanding alert
     unpaid_total = sum(i["balance"] for i in invoices)
     if unpaid_total > 0:
-        st.warning(f"⚠️ You have an outstanding total balance of **{format_currency(unpaid_total)}** across your invoices.")
+        st.warning(f"You have an outstanding total balance of **{format_currency(unpaid_total)}** across your invoices.")
     else:
-        st.success("🎉 All your rent invoices are up to date and fully paid!")
+        st.success("All your rent invoices are up to date and fully paid.")
 
-    st.markdown("### 📑 Your Invoices")
+    st.markdown("### Invoices & Payment Statements")
     for inv in invoices:
         with st.expander(
-            f"📅 **Month: {inv['month_year']}** — Final Payable: {format_currency(inv['final_rent'])} | "
-            f"Paid: {format_currency(inv['paid_amount'])} | Status: **{inv['status']}**",
+            f"Month: {inv['month_year']} — Final Payable: {format_currency(inv['final_rent'])} | "
+            f"Paid: {format_currency(inv['paid_amount'])} | Status: {inv['status']}",
             expanded=(inv["balance"] > 0)
         ):
             c1, c2 = st.columns([2, 1])
@@ -229,7 +230,7 @@ def _render_tenant_rent_view(user):
                 # Payments for this record
                 payments = database.get_payments_for_rent_record(inv["id"])
                 if payments:
-                    st.markdown("##### 🧾 Payment Receipts:")
+                    st.markdown("##### Payment Receipts:")
                     for p in payments:
                         st.caption(
                             f"• {format_date(p['payment_date'])}: Paid **{format_currency(p['amount'])}** via "
@@ -238,11 +239,11 @@ def _render_tenant_rent_view(user):
 
             with c2:
                 if inv["balance"] > 0:
-                    st.info(f"💳 Balance Due: **{format_currency(inv['balance'])}**")
+                    st.info(f"Balance Due: **{format_currency(inv['balance'])}**")
                     st.caption("To settle this invoice, please pay via UPI or Bank Transfer and notify property management:")
                     st.code(f"UPI ID: rent@smartrent.ai\nAmount: {format_currency(inv['balance'])}")
                 else:
-                    st.success("✅ This invoice is fully settled.")
+                    st.success("This invoice is fully settled.")
 
 
 if __name__ == "__main__" or True:

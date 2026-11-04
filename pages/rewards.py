@@ -21,8 +21,9 @@ def render_rewards():
     if not user:
         st.error("Please log in to access Rewards & Discounts.")
         st.stop()
+        return
 
-    st.title("🏆 AI Cleanliness Rewards & Rent Discounts")
+    st.title("Cleanliness Rewards & Rent Discounts")
 
     if is_owner():
         _render_owner_rewards(user)
@@ -49,23 +50,23 @@ def _render_owner_rewards(user):
     st.markdown("---")
 
     tab_approval, tab_history, tab_config = st.tabs([
-        f"⏳ Approval Queue ({len(pending_r)})",
-        "📜 Reward History Ledger",
-        "⚙️ Reward Policy Configuration"
+        f"Approval Queue ({len(pending_r)})",
+        "Reward History Ledger",
+        "Reward Policy Configuration"
     ])
 
     with tab_approval:
         st.subheader("Pending Discount Recommendations")
         if not pending_r:
-            st.success("🎉 All AI discount recommendations have been processed.")
+            st.success("All AI discount recommendations have been processed.")
         else:
             for r in pending_r:
                 score = r.get("cleanliness_score", 0.0)
                 color = get_score_color(score)
 
                 with st.expander(
-                    f"🌟 **{r['room_number']}** — **{r['tenant_name']}** | Month: `{r['month_year']}` | "
-                    f"Score: **{score}/100** | Discount: **{r['discount_percentage']}%** (-{format_currency(r['discount_amount'])})",
+                    f"Unit {r['room_number']} — {r['tenant_name']} | Month: {r['month_year']} | "
+                    f"Score: {score}/100 | Discount: {r['discount_percentage']}% (-{format_currency(r['discount_amount'])})",
                     expanded=True
                 ):
                     c_info, c_acts = st.columns([2, 1])
@@ -85,7 +86,7 @@ def _render_owner_rewards(user):
 
                         btn_app, btn_rej = st.columns(2)
                         with btn_app:
-                            if st.button("✅ Approve", key=f"app_{r['id']}", type="primary", use_container_width=True):
+                            if st.button("Approve", key=f"app_{r['id']}", type="primary", use_container_width=True):
                                 success, msg = approve_reward_and_apply_to_rent(r["id"], owner_comments=o_comm.strip())
                                 if success:
                                     st.success(msg)
@@ -93,7 +94,7 @@ def _render_owner_rewards(user):
                                 else:
                                     st.error(msg)
                         with btn_rej:
-                            if st.button("❌ Reject", key=f"rej_{r['id']}", use_container_width=True):
+                            if st.button("Reject", key=f"rej_{r['id']}", use_container_width=True):
                                 success, msg = reject_reward(r["id"], owner_comments=o_comm.strip() or "Owner declined discount")
                                 st.info(msg)
                                 st.rerun()
@@ -157,11 +158,11 @@ def _render_owner_rewards(user):
             st.markdown("---")
             new_cap = st.number_input("Maximum Discount Cap Percentage (%)", min_value=1.0, max_value=50.0, value=float(current_cap), step=1.0)
 
-            btn_save_config = st.form_submit_button("💾 Save Policy Settings", use_container_width=True)
+            btn_save_config = st.form_submit_button("Save Policy Settings", use_container_width=True)
             if btn_save_config:
                 database.set_setting("reward_tiers_json", json.dumps(new_tiers), "Configured reward discount tiers")
                 database.set_setting("max_discount_percent", str(new_cap), "Maximum allowed rent discount percentage")
-                st.success("🎉 Reward policy rules updated successfully!")
+                st.success("Reward policy rules updated successfully.")
                 st.rerun()
 
 
@@ -180,35 +181,33 @@ def _render_tenant_rewards(user):
     total_saved = sum(r["discount_amount"] for r in rewards if r["status"] in ("Approved", "Applied"))
 
     k1, k2, k3 = st.columns(3)
-    k1.metric("Your Total Reward Points", f"{total_pts} pts")
+    k1.metric("Total Reward Points", f"{total_pts} pts")
     k2.metric("Total Rent Money Saved", format_currency(total_saved))
     k3.metric("Eligible Discount Tiers", "Up to 10% / month")
 
-    st.markdown("---")
+    st.html('<div style="height: 1px; background-color: #E3D7CE; margin: 24px 0;"></div>')
 
     # Reward Structure Infobox
-    st.markdown("### 🎯 Cleanliness Scoring & Discount Tiers")
+    st.markdown("### Scoring & Discount Policy")
     tiers = get_configured_reward_tiers()
     tier_cols = st.columns(len(tiers))
     for idx, t in enumerate(tiers):
         with tier_cols[idx]:
-            st.markdown(f"""
-            <div style="background-color: rgba(30,41,59,0.05); padding: 12px; border-radius: 8px; text-align: center; border: 1px solid #cbd5e1;">
-                <h4 style="margin: 0; color: #2563eb;">{t['discount_pct']}% OFF</h4>
-                <p style="margin: 4px 0; font-weight: 600;">{t['min']} – {t['max']} Score</p>
-                <small style="color: #64748b;">{t.get('label', '')}</small>
-            </div>
-            """, unsafe_allow_html=True)
+            st.html(f"""<div style="background-color: #FFFFFF; padding: 16px 14px; border-radius: 10px; text-align: center; border: 1px solid #E3D7CE; border-top: 3px solid #6D3914; box-shadow: 0 1px 2px rgba(53,39,30,0.03);">
+                <div style="font-size: 1.35rem; font-weight: 800; color: #6D3914; letter-spacing: -0.02em;">{t['discount_pct']}% OFF</div>
+                <div style="margin: 4px 0 2px; font-weight: 700; font-size: 0.9rem; color: #35271E;">{t['min']} – {t['max']} Score</div>
+                <div style="color: #8C7465; font-size: 0.8rem; font-weight: 500;">{t.get('label', '')}</div>
+            </div>""")
 
-    st.markdown("---")
+    st.html('<div style="height: 1px; background-color: #E3D7CE; margin: 24px 0;"></div>')
 
-    st.markdown("### 📜 Your Reward & Discount History")
+    st.markdown("### Reward & Discount History")
     if not rewards:
-        st.info("You haven't earned any rewards yet. Submit your room photographs during the monthly inspection to get rewarded!")
+        st.info("You have not earned any rewards yet. Submit your room photographs during the monthly inspection to get rewarded.")
     else:
         for rw in rewards:
             with st.expander(
-                f"🌟 **Month: {rw['month_year']}** — Discount: **{rw['discount_percentage']}%** ({format_currency(rw['discount_amount'])}) | Status: **{rw['status']}**",
+                f"Month: {rw['month_year']} — Discount: {rw['discount_percentage']}% ({format_currency(rw['discount_amount'])}) | Status: {rw['status']}",
                 expanded=False
             ):
                 st.markdown(f"""

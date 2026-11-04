@@ -18,22 +18,27 @@ from utils.helpers import (
 
 def render_tenant_dashboard():
     if not is_tenant():
-        st.error("⛔ Access Denied. This dashboard is for tenants only.")
+        st.error("Access restricted to active tenants.")
         st.stop()
+        return
 
     user = get_current_user()
+    if not user:
+        st.error("Please select an active tenant account.")
+        st.stop()
+        return
+
     tenant = database.get_tenant_by_user_id(user["id"])
 
     if not tenant:
-        st.warning("⚠️ No active tenant assignment found for your user account. Please contact property management.")
+        st.warning("No active tenant assignment found for your user account.")
         st.stop()
 
     current_month = get_current_month_str()
-    st.title(f"👋 Welcome back, {user['full_name']}!")
-    st.caption(f"Tenant Portal | Assigned Room: **{tenant['room_number']}** | Member since {format_date(tenant['joining_date'])}")
+    st.title(f"Welcome, {user['full_name']}")
+    st.caption(f"Tenant Account | Assigned Unit: Room {tenant['room_number']} | Lease Commenced: {format_date(tenant['joining_date'])}")
 
-    # Top KPI Metrics for Tenant
-    st.markdown("### 📌 At a Glance")
+    st.subheader("Account Overview")
     k1, k2, k3, k4 = st.columns(4)
 
     # 1. Monthly Rent & Current Invoice
@@ -42,9 +47,9 @@ def render_tenant_dashboard():
 
     with k1:
         st.metric(
-            label="Assigned Room Rent",
+            label="Base Monthly Rent",
             value=format_currency(tenant["monthly_rent"]),
-            delta=f"Room {tenant['room_number']}",
+            delta=f"Unit {tenant['room_number']}",
             delta_color="off"
         )
 
@@ -57,7 +62,7 @@ def render_tenant_dashboard():
                 delta_color="normal" if curr_invoice['status'] == "Paid" else "inverse"
             )
         else:
-            st.metric(label=f"Invoice ({current_month})", value="Not Generated", delta="Due around 5th")
+            st.metric(label=f"Invoice ({current_month})", value="Not Generated", delta="Due 5th of Month")
 
     # 2. Latest Inspection Score & Reward Points
     inspections = database.get_tenant_inspections(tenant["id"])
@@ -66,13 +71,13 @@ def render_tenant_dashboard():
     with k3:
         if latest_insp and latest_insp.get("overall_score"):
             st.metric(
-                label="Latest Cleanliness Score",
+                label="Cleanliness Score",
                 value=f"{latest_insp['overall_score']} / 100",
-                delta=latest_insp["result_category"],
+                delta=latest_insp.get("result_category", "Standard"),
                 delta_color="normal"
             )
         else:
-            st.metric(label="Cleanliness Score", value="No Uploads Yet", delta="Upload room photos")
+            st.metric(label="Cleanliness Score", value="Pending", delta="Upload room photos")
 
     # 3. Total Rewards & Active Discount
     rewards = database.get_tenant_rewards(tenant["id"])
@@ -81,35 +86,36 @@ def render_tenant_dashboard():
 
     with k4:
         st.metric(
-            label="Cleanliness Reward Points",
+            label="Reward Points",
             value=f"{total_pts} pts",
             delta=f"{latest_reward['discount_percentage']}% discount" if latest_reward else "0% discount",
             delta_color="normal" if latest_reward else "off"
         )
 
-    st.markdown("---")
+    st.html('<div style="height: 1px; background-color: #E3D7CE; margin: 24px 0;"></div>')
 
     # Main columns: Left = Room & Rent Details, Right = Cleanliness & AI Feedback
-    col_left, col_right = st.columns([1.2, 1.3])
+    col_left, col_right = st.columns([1, 1], gap="large")
 
     with col_left:
-        st.subheader("🏠 Your Room & Lease")
-        st.markdown(f"""
-        - **Room Number:** `{tenant['room_number']}`
-        - **Base Rent:** `{format_currency(tenant['monthly_rent'])} / month`
-        - **Description:** {tenant.get('room_description', 'Standard accommodation')}
-        - **Lease Start Date:** {format_date(tenant['joining_date'])}
-        - **Emergency Contact:** {tenant.get('emergency_contact', 'Not configured') or 'None'}
-        """)
+        st.subheader("Unit & Lease Information")
+        unit_html = f"""<div style="background: #FFFFFF; border: 1px solid #E3D7CE; border-left: 4px solid #AB7843; border-radius: 12px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(53,39,30,0.04); margin-bottom: 24px;">
+            <div style="margin-bottom: 8px; color: #35271E;"><strong style="color: #6D3914;">Assigned Unit:</strong> Unit {tenant['room_number']}</div>
+            <div style="margin-bottom: 8px; color: #35271E;"><strong style="color: #6D3914;">Base Rent:</strong> {format_currency(tenant['monthly_rent'])} / month</div>
+            <div style="margin-bottom: 8px; color: #35271E;"><strong style="color: #6D3914;">Description:</strong> {tenant.get('room_description', 'Standard residential unit')}</div>
+            <div style="margin-bottom: 8px; color: #35271E;"><strong style="color: #6D3914;">Lease Start Date:</strong> {format_date(tenant['joining_date'])}</div>
+            <div style="color: #35271E;"><strong style="color: #6D3914;">Emergency Contact:</strong> {tenant.get('emergency_contact', 'Not configured') or 'None on record'}</div>
+        </div>"""
+        st.html(unit_html)
 
-        st.markdown("#### 🧾 Payment History")
+        st.subheader("Payment History")
         if invoices:
             inv_df = pd.DataFrame([
                 {
-                    "Month": inv["month_year"],
-                    "Base Rent": format_currency(inv["base_rent"]),
+                    "Billing Month": inv["month_year"],
+                    "Base": format_currency(inv["base_rent"]),
                     "Discount": f"{inv['discount_percentage']}% (-{format_currency(inv['discount_amount'])})",
-                    "Final Rent": format_currency(inv["final_rent"]),
+                    "Net Due": format_currency(inv["final_rent"]),
                     "Paid": format_currency(inv["paid_amount"]),
                     "Balance": format_currency(inv["balance"]),
                     "Status": inv["status"]
@@ -118,44 +124,68 @@ def render_tenant_dashboard():
             ])
             st.dataframe(inv_df, use_container_width=True, hide_index=True)
         else:
-            st.info("No rent invoices generated yet.")
+            st.info("No rent invoices generated on record.")
 
     with col_right:
-        st.subheader("🤖 Latest AI Inspection Feedback")
+        st.subheader("Latest AI Inspection Feedback")
         if latest_insp and latest_insp.get("overall_score"):
             score = latest_insp["overall_score"]
             color = get_score_color(score)
-            st.markdown(f"""
-            <div style="background-color: rgba(30, 41, 59, 0.05); padding: 16px; border-radius: 12px; border-left: 6px solid {color};">
-                <h4 style="margin: 0; color: {color};">Score: {score} / 100 — {latest_insp['result_category']}</h4>
-                <p style="margin-top: 6px; font-size: 0.88rem; color: #6b7280;">Inspection Date: {format_date(latest_insp['submission_date'])}</p>
-                <p><strong>🌟 Positive Habits:</strong><br>{latest_insp.get('positive_observations', 'Well maintained overall.')}</p>
-                <p><strong>🔍 Areas for Improvement:</strong><br>{latest_insp.get('areas_for_improvement', 'None detected.')}</p>
-                <p><strong>💡 Cleaning Recommendations:</strong><br>{latest_insp.get('recommendations', 'Continue regular vacuuming and surface wiping.')}</p>
-            </div>
-            """, unsafe_allow_html=True)
+            feedback_html = f"""<div style="background-color: #FFFFFF; border: 1px solid #E3D7CE; border-left: 5px solid {color}; padding: 18px 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(53,39,30,0.04); margin-bottom: 18px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 1.3rem; font-weight: 800; color: {color};">Score: {score} / 100</span>
+                    <span style="font-size: 0.78rem; font-weight: 700; color: #4C2B08; background-color: rgba(184, 149, 127, 0.22); border: 1px solid #B8957F; padding: 3px 12px; border-radius: 9999px;">{latest_insp['result_category']}</span>
+                </div>
+                <div style="font-size: 0.8rem; color: #8C7465; margin-bottom: 14px;">Evaluated on: {format_date(latest_insp['submission_date'])}</div>
+                <div style="margin-bottom: 12px;">
+                    <div style="font-weight: 700; color: #6D3914; font-size: 0.88rem; margin-bottom: 2px;">Positive Observations:</div>
+                    <div style="font-size: 0.88rem; color: #35271E; line-height: 1.45;">{latest_insp.get('positive_observations', 'Well maintained overall.')}</div>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <div style="font-weight: 700; color: #AB7843; font-size: 0.88rem; margin-bottom: 2px;">Areas for Improvement:</div>
+                    <div style="font-size: 0.88rem; color: #35271E; line-height: 1.45;">{latest_insp.get('areas_for_improvement', 'None detected.')}</div>
+                </div>
+                <div>
+                    <div style="font-weight: 700; color: #4C2B08; font-size: 0.88rem; margin-bottom: 2px;">Cleaning Recommendations:</div>
+                    <div style="font-size: 0.88rem; color: #35271E; line-height: 1.45;">{latest_insp.get('recommendations', 'Continue regular dusting and maintenance.')}</div>
+                </div>
+            </div>"""
+            st.html(feedback_html)
 
             # Show category breakdown
             cat_scores = database.get_cleanliness_scores(latest_insp["id"])
             if cat_scores:
                 st.markdown("##### Category Breakdown")
                 for cs in cat_scores:
-                    st.write(f"**{cs['category']}**: `{cs['score']}/100` — *{cs.get('notes', '')}*")
+                    cs_col = get_score_color(cs['score'])
+                    cat_html = f"""<div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; background: #FFFFFF; border: 1px solid #E3D7CE; border-radius: 8px; margin-bottom: 6px;">
+                        <span style="font-weight: 600; color: #35271E; font-size: 0.88rem;">{cs['category']}</span>
+                        <span style="font-weight: 800; color: {cs_col}; font-size: 0.95rem;">{cs['score']} / 100</span>
+                    </div>"""
+                    st.html(cat_html)
         else:
-            st.info("You haven't submitted your room photographs for this month. Upload room photos to earn up to 10% rent discount!")
+            st.info("No room inspection submitted for this billing cycle. Upload photos to unlock rent discounts.")
 
-    st.markdown("---")
+    st.html('<div style="height: 1px; background-color: #E3D7CE; margin: 24px 0;"></div>')
 
     # Maintenance Status Section
-    st.subheader("🛠️ Active Maintenance Requests")
+    st.subheader("Active Maintenance Requests")
     maint_list = database.get_tenant_maintenance_requests(tenant["id"])
     if maint_list:
         for m in maint_list[:3]:
-            st.markdown(f"- **[{m['priority']}] {m['title']}** — Status: `{m['status']}` ({format_date(m['created_at'])})")
-            if m.get("owner_notes"):
-                st.caption(f"  *Owner update:* {m['owner_notes']}")
+            prio_color = "#991B1B" if m["priority"] == "Urgent" else ("#C27803" if m["priority"] == "High" else "#6D3914")
+            m_notes = f'<div style="font-size: 0.82rem; color: #6D3914; margin-top: 6px; background: rgba(184, 149, 127, 0.12); padding: 6px 10px; border-radius: 6px;"><strong>Update:</strong> {m["owner_notes"]}</div>' if m.get("owner_notes") else ''
+            ticket_html = f"""<div style="background: #FFFFFF; border: 1px solid #E3D7CE; border-left: 4px solid {prio_color}; border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; box-shadow: 0 1px 2px rgba(53,39,30,0.03);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <strong style="color: #35271E; font-size: 0.92rem;">{m['title']}</strong>
+                    {render_status_badge(m['status'])}
+                </div>
+                <div style="font-size: 0.82rem; color: #8C7465; margin-top: 4px;">Priority: <strong style="color: {prio_color};">{m['priority']}</strong> | Reported: {format_date(m['created_at'])}</div>
+                {m_notes}
+            </div>"""
+            st.html(ticket_html)
     else:
-        st.write("No active maintenance tickets.")
+        st.write("No active maintenance tickets on record.")
 
 
 if __name__ == "__main__" or True:

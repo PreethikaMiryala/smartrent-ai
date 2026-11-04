@@ -81,7 +81,7 @@ def stream_groq_chat(
     """
     client = get_groq_client()
     if not client:
-        yield "⚠️ Groq API Key is not configured. Please configure your API key in Settings or contact the administrator."
+        yield "Groq API Key is not configured. Please configure your API key in Settings or contact the administrator."
         return
 
     try:
@@ -101,7 +101,7 @@ def stream_groq_chat(
             if content:
                 yield content
     except Exception as e:
-        yield f"\n\n⚠️ Error during AI generation: {str(e)}"
+        yield f"\n\nError during AI generation: {str(e)}"
 
 
 def call_groq_completion(

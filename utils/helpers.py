@@ -82,49 +82,50 @@ def calculate_score_category(score: float) -> str:
 def get_score_color(score: float) -> str:
     """Returns hexadecimal color code corresponding to a cleanliness score."""
     if score >= 90:
-        return "#10b981"  # Emerald
+        return "#2E7D32"  # Forest Green
     elif score >= 75:
-        return "#06b6d4"  # Cyan
+        return "#AB7843"  # Caramel
     elif score >= 60:
-        return "#f59e0b"  # Amber
+        return "#C27803"  # Warm Amber
     else:
-        return "#ef4444"  # Red
+        return "#991B1B"  # Rustic Red
 
 
 def render_status_badge(status: str) -> str:
-    """Returns styled HTML badge for various statuses."""
+    """Returns styled HTML badge for various statuses using the project palette."""
     color_map = {
         # Payment Statuses
-        "Paid": ("#065f46", "#d1fae5"),
-        "Partially Paid": ("#92400e", "#fef3c7"),
-        "Pending": ("#b45309", "#ffedd5"),
-        "Overdue": ("#991b1b", "#fee2e2"),
+        "Paid": ("#2B5329", "#EAF2EB", "#BCD6BF"),
+        "Partially Paid": ("#4C2B08", "rgba(171, 120, 67, 0.2)", "#AB7843"),
+        "Pending": ("#6D3914", "rgba(184, 149, 127, 0.22)", "#B8957F"),
+        "Overdue": ("#7F1D1D", "#FEE2E2", "#FCA5A5"),
         # Room Statuses
-        "Vacant": ("#065f46", "#d1fae5"),
-        "Occupied": ("#1e40af", "#dbeafe"),
-        "Maintenance": ("#991b1b", "#fee2e2"),
+        "Vacant": ("#2B5329", "#EAF2EB", "#BCD6BF"),
+        "Occupied": ("#4C2B08", "rgba(109, 57, 20, 0.12)", "#6D3914"),
+        "Maintenance": ("#7F1D1D", "#FEE2E2", "#FCA5A5"),
         # Inspection Statuses
-        "Inspected": ("#065f46", "#d1fae5"),
-        "Pending Review": ("#92400e", "#fef3c7"),
-        "Resubmission Requested": ("#991b1b", "#fee2e2"),
+        "Inspected": ("#2B5329", "#EAF2EB", "#BCD6BF"),
+        "Pending Review": ("#6D3914", "rgba(184, 149, 127, 0.22)", "#B8957F"),
+        "Resubmission Requested": ("#7F1D1D", "#FEE2E2", "#FCA5A5"),
         # Damage Review Statuses
-        "Verified": ("#991b1b", "#fee2e2"),
-        "Not Damage": ("#065f46", "#d1fae5"),
-        "Maintenance Scheduled": ("#1e40af", "#dbeafe"),
+        "Verified": ("#7F1D1D", "#FEE2E2", "#FCA5A5"),
+        "Not Damage": ("#2B5329", "#EAF2EB", "#BCD6BF"),
+        "Maintenance Scheduled": ("#4C2B08", "rgba(171, 120, 67, 0.2)", "#AB7843"),
         # Maintenance Ticket Statuses
-        "Submitted": ("#b45309", "#ffedd5"),
-        "In Progress": ("#1e40af", "#dbeafe"),
-        "Completed": ("#065f46", "#d1fae5"),
-        "Cancelled": ("#4b5563", "#f3f4f6"),
+        "Submitted": ("#6D3914", "rgba(184, 149, 127, 0.22)", "#B8957F"),
+        "In Progress": ("#4C2B08", "rgba(171, 120, 67, 0.2)", "#AB7843"),
+        "Completed": ("#2B5329", "#EAF2EB", "#BCD6BF"),
+        "Cancelled": ("#5A4A42", "#EFE8E2", "#DDCFC6"),
         # Reward Statuses
-        "Approved": ("#065f46", "#d1fae5"),
-        "Rejected": ("#991b1b", "#fee2e2"),
-        "Applied": ("#1e40af", "#dbeafe"),
+        "Approved": ("#2B5329", "#EAF2EB", "#BCD6BF"),
+        "Rejected": ("#7F1D1D", "#FEE2E2", "#FCA5A5"),
+        "Applied": ("#4C2B08", "rgba(171, 120, 67, 0.2)", "#AB7843"),
     }
 
-    text_color, bg_color = color_map.get(status, ("#374151", "#e5e7eb"))
+    text_color, bg_color, border_color = color_map.get(status, ("#35271E", "#EFE8E2", "#DDCFC6"))
     return (
         f'<span style="background-color: {bg_color}; color: {text_color}; '
-        f'padding: 3px 10px; border-radius: 9999px; font-size: 0.82rem; '
+        f'border: 1px solid {border_color}; '
+        f'padding: 3px 11px; border-radius: 9999px; font-size: 0.8rem; '
         f'font-weight: 600; display: inline-block;">{status}</span>'
     )
