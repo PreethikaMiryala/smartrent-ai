@@ -230,7 +230,34 @@ def init_db():
     if cursor.fetchone()[0] == 0:
         seed_sample_data(conn)
 
+    migrate_tenant_display_names(conn)
+    conn.commit()
     conn.close()
+
+
+def migrate_tenant_display_names(conn: sqlite3.Connection) -> None:
+    """Rename legacy tenant display names without changing account or tenancy data."""
+    cursor = conn.cursor()
+    display_names = (
+        ("Rahul Sharma", "Shiva Guptha"),
+        ("Priya Patel", "Preethika Guptha"),
+        ("Amit Kumar", "Bunny"),
+    )
+
+    for old_name, new_name in display_names:
+        cursor.execute(
+            "UPDATE users SET full_name = ? WHERE role = 'tenant' AND full_name = ?;",
+            (new_name, old_name),
+        )
+        cursor.execute(
+            """
+            UPDATE chatbot_logs
+            SET query = replace(query, ?, ?),
+                response = replace(response, ?, ?)
+            WHERE query LIKE ? OR response LIKE ?;
+            """,
+            (old_name, new_name, old_name, new_name, f"%{old_name}%", f"%{old_name}%"),
+        )
 
 
 def seed_sample_data(conn: sqlite3.Connection):
